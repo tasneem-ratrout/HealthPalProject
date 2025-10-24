@@ -2,18 +2,17 @@ import bcrypt from 'bcrypt';
 import { pool } from '../db.js';
 import jwt from 'jsonwebtoken';
 
-
-
-//register
+// ===============================
+// Register
+// ===============================
 export async function register(req, res) {
   try {
-    const { name, email, password, role = 'patient' } = req.body;
+    const { name, email, password, role = 'patient', specialty_id } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Name, email, and password are required' });
     }
 
-    
     const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
     if (existing.length > 0) {
       return res.status(409).json({ error: 'Email already registered' });
@@ -21,25 +20,32 @@ export async function register(req, res) {
 
 
     const password_hash = await bcrypt.hash(password, 10);
+ 
+    if (role === 'doctor' && !specialty_id) {
+      return res.status(400).json({ error: 'Doctor must have a specialty_id' });
+    }
 
 
     const [result] = await pool.query(
-      'INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)',
-      [name, email, password_hash, role]
+      'INSERT INTO users (name, email, password_hash, role, specialty_id) VALUES (?, ?, ?, ?, ?)',
+      [name, email, password_hash, role, specialty_id || null]
     );
 
+    
     res.status(201).json({
       message: 'User registered successfully',
-      user: { id: result.insertId, name, email, role }
+      user: { id: result.insertId, name, email, role, specialty_id: specialty_id || null }
     });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error', details: err.message });
   }
-
 }
 
+
+// ===============================
 //login
+// ===============================
 export async function login(req, res) {
   try {
     const { email, password } = req.body || {};
@@ -74,8 +80,9 @@ export async function login(req, res) {
   }
 }
 
-
+// ===============================
 //personal account
+// ===============================
 export async function me(req, res) {
   try {
     const [rows] = await pool.query(

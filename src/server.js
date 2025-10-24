@@ -3,6 +3,7 @@ import cors from 'cors';
 import 'dotenv/config';
 import { pool } from './db.js';
 import authRoutes from './routes/authRoutes.js';
+import appointmentRoutes from './routes/appointmentRoutes.js'; 
 
 const app = express();
 app.use(cors());
@@ -18,6 +19,8 @@ app.get('/api/health', async (_req, res) => {
 });
 
 app.use('/api/v1/auth', authRoutes);
+
+app.use('/api/v1/appointments', appointmentRoutes);
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`✅ Server running at http://localhost:${port}`));
