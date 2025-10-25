@@ -5,6 +5,7 @@ import { pool } from './db.js';
 import authRoutes from './routes/authRoutes.js';
 import appointmentRoutes from './routes/appointmentRoutes.js'; 
 import doctorRoutes from './routes/doctorRoutes.js';
+import sponsorshipRoutes from './routes/sponsorshipRoutes.js';
 
 const app = express();
 app.use(cors());
@@ -24,6 +25,8 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/appointments', appointmentRoutes);
 
 app.use('/api/v1/doctors', doctorRoutes);
+
+app.use('/api/v1/sponsorship', sponsorshipRoutes);
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`✅ Server running at http://localhost:${port}`));
