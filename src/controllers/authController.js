@@ -13,25 +13,25 @@ export async function register(req, res) {
       return res.status(400).json({ error: 'Name, email, and password are required' });
     }
 
+    if (role === 'admin') {
+      return res.status(403).json({ error: 'Admin accounts cannot be registered manually' });
+    }
+
     const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
     if (existing.length > 0) {
       return res.status(409).json({ error: 'Email already registered' });
     }
 
-
     const password_hash = await bcrypt.hash(password, 10);
- 
     if (role === 'doctor' && !specialty_id) {
       return res.status(400).json({ error: 'Doctor must have a specialty_id' });
     }
-
 
     const [result] = await pool.query(
       'INSERT INTO users (name, email, password_hash, role, specialty_id) VALUES (?, ?, ?, ?, ?)',
       [name, email, password_hash, role, specialty_id || null]
     );
 
-    
     res.status(201).json({
       message: 'User registered successfully',
       user: { id: result.insertId, name, email, role, specialty_id: specialty_id || null }
