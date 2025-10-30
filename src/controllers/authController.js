@@ -8,18 +8,18 @@ import validator from 'validator';
 // ===============================
 export async function register(req, res) {
   try {
-    const { name, email, password, role = 'patient', specialty_id } = req.body;
+    const { name, email, password } = req.body;
+    const role = 'patient';
+    const specialty_id = null;
 
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Name, email, and password are required.' });
     }
 
-  
     if (name.length < 3) {
       return res.status(400).json({ error: 'Name must be at least 3 characters long.' });
     }
 
-  
     if (!validator.isEmail(email)) {
       return res.status(400).json({ error: 'Invalid email format.' });
     }
@@ -34,28 +34,20 @@ export async function register(req, res) {
 
     if (!strongPassword) {
       return res.status(400).json({
-        error:
-          'Password must be at least 8 characters long and include uppercase, lowercase, number, and special symbol.'
+        error: 'Password must be at least 8 characters long and include uppercase, lowercase, number, and special symbol.'
       });
     }
-
 
     const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
     if (existing.length > 0) {
       return res.status(409).json({ error: 'This email is already registered. Please log in instead.' });
     }
 
-    if (role !== 'patient') {
-      return res.status(403).json({
-        error: 'Only patients can self-register. Accounts for doctors, donors, and NGOs must be created by an admin.'
-      });
-    }
-
     const password_hash = await bcrypt.hash(password, 10);
 
     const [result] = await pool.query(
       'INSERT INTO users (name, email, password_hash, role, specialty_id) VALUES (?, ?, ?, ?, ?)',
-      [name, email, password_hash, 'patient', null]
+      [name, email, password_hash, role, specialty_id]
     );
 
     res.status(201).json({
@@ -65,7 +57,7 @@ export async function register(req, res) {
         id: result.insertId,
         name,
         email,
-        role: 'patient'
+        role
       }
     });
   } catch (err) {
@@ -76,6 +68,7 @@ export async function register(req, res) {
     });
   }
 }
+
 
 // ===============================
 // Login
