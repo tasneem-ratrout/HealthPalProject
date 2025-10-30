@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import { pool } from '../db.js';
 import jwt from 'jsonwebtoken';
+import validator from 'validator';
 
 // ===============================
 // Register (only patients can self-register)
@@ -10,8 +11,34 @@ export async function register(req, res) {
     const { name, email, password, role = 'patient', specialty_id } = req.body;
 
     if (!name || !email || !password) {
-      return res.status(400).json({ error: 'Name, email, and password are required' });
+      return res.status(400).json({ error: 'Name, email, and password are required.' });
     }
+
+  
+    if (name.length < 3) {
+      return res.status(400).json({ error: 'Name must be at least 3 characters long.' });
+    }
+
+  
+    if (!validator.isEmail(email)) {
+      return res.status(400).json({ error: 'Invalid email format.' });
+    }
+
+    const strongPassword = validator.isStrongPassword(password, {
+      minLength: 8,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1,
+      minSymbols: 1
+    });
+
+    if (!strongPassword) {
+      return res.status(400).json({
+        error:
+          'Password must be at least 8 characters long and include uppercase, lowercase, number, and special symbol.'
+      });
+    }
+
 
     const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
     if (existing.length > 0) {
@@ -25,13 +52,15 @@ export async function register(req, res) {
     }
 
     const password_hash = await bcrypt.hash(password, 10);
+
     const [result] = await pool.query(
       'INSERT INTO users (name, email, password_hash, role, specialty_id) VALUES (?, ?, ?, ?, ?)',
       [name, email, password_hash, 'patient', null]
     );
 
     res.status(201).json({
-      message: ` Welcome ${name}! Your patient account has been created successfully.`,
+      success: true,
+      message: `Welcome ${name}! Your patient account has been created successfully.`,
       user: {
         id: result.insertId,
         name,
