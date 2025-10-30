@@ -13,38 +13,47 @@ export async function register(req, res) {
       return res.status(400).json({ error: 'Name, email, and password are required' });
     }
 
-    if (role === 'admin') {
-      return res.status(403).json({ error: 'Admin accounts cannot be registered manually' });
-    }
-
     const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
     if (existing.length > 0) {
-      return res.status(409).json({ error: 'Email already registered' });
+      return res.status(409).json({ error: 'This email is already registered. Please log in instead.' });
+    }
+
+    const allowedRoles = ['patient', 'doctor', 'donor', 'ngo'];
+    if (!allowedRoles.includes(role)) {
+      return res.status(403).json({ error: 'Invalid role. You can only register as patient, doctor, donor, or NGO.' });
+    }
+
+    if (role === 'doctor' && !specialty_id) {
+      return res.status(400).json({ error: 'Doctors must include a valid specialty_id.' });
     }
 
     const password_hash = await bcrypt.hash(password, 10);
-    if (role === 'doctor' && !specialty_id) {
-      return res.status(400).json({ error: 'Doctor must have a specialty_id' });
-    }
-
     const [result] = await pool.query(
       'INSERT INTO users (name, email, password_hash, role, specialty_id) VALUES (?, ?, ?, ?, ?)',
       [name, email, password_hash, role, specialty_id || null]
     );
 
     res.status(201).json({
-      message: 'User registered successfully',
-      user: { id: result.insertId, name, email, role, specialty_id: specialty_id || null }
+      message: `🎉 Welcome ${name}! Your ${role} account has been created successfully.`,
+      user: {
+        id: result.insertId,
+        name,
+        email,
+        role,
+        specialty_id: specialty_id || null
+      }
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error', details: err.message });
+    res.status(500).json({
+      error: 'Server error occurred while registering.',
+      details: err.message
+    });
   }
 }
 
-
 // ===============================
-//login
+// Login
 // ===============================
 export async function login(req, res) {
   try {
@@ -57,11 +66,12 @@ export async function login(req, res) {
       'SELECT id, name, email, role, password_hash FROM users WHERE email = ? LIMIT 1',
       [email]
     );
-    if (!rows.length) return res.status(401).json({ error: 'Invalid credentials' });
+
+    if (!rows.length) return res.status(401).json({ error: 'Invalid email or password' });
 
     const user = rows[0];
     const ok = await bcrypt.compare(password, user.password_hash);
-    if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!ok) return res.status(401).json({ error: 'Invalid email or password' });
 
     const token = jwt.sign(
       { id: user.id, role: user.role, name: user.name },
@@ -70,18 +80,23 @@ export async function login(req, res) {
     );
 
     res.json({
-      message: 'Logged in',
+      message: `👋 Welcome back, ${user.name}! You are logged in as ${user.role}.`,
       token,
-      user: { id: user.id, name: user.name, email: user.email, role: user.role }
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Server error during login.' });
   }
 }
 
 // ===============================
-//personal account
+// Personal Account Info
 // ===============================
 export async function me(req, res) {
   try {
@@ -90,11 +105,13 @@ export async function me(req, res) {
       [req.user.id]
     );
     if (!rows.length) return res.status(404).json({ error: 'User not found' });
-    res.json(rows[0]);
+
+    res.json({
+      message: `👤 Welcome ${rows[0].name}, here is your profile information.`,
+      profile: rows[0]
+    });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Server error while retrieving profile data.' });
   }
 }
-  
-
