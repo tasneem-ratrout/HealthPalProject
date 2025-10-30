@@ -3,7 +3,7 @@ import { pool } from '../db.js';
 import jwt from 'jsonwebtoken';
 
 // ===============================
-// Register
+// Register (only patients can self-register)
 // ===============================
 export async function register(req, res) {
   try {
@@ -18,29 +18,25 @@ export async function register(req, res) {
       return res.status(409).json({ error: 'This email is already registered. Please log in instead.' });
     }
 
-    const allowedRoles = ['patient', 'doctor', 'donor', 'ngo'];
-    if (!allowedRoles.includes(role)) {
-      return res.status(403).json({ error: 'Invalid role. You can only register as patient, doctor, donor, or NGO.' });
-    }
-
-    if (role === 'doctor' && !specialty_id) {
-      return res.status(400).json({ error: 'Doctors must include a valid specialty_id.' });
+    if (role !== 'patient') {
+      return res.status(403).json({
+        error: 'Only patients can self-register. Accounts for doctors, donors, and NGOs must be created by an admin.'
+      });
     }
 
     const password_hash = await bcrypt.hash(password, 10);
     const [result] = await pool.query(
       'INSERT INTO users (name, email, password_hash, role, specialty_id) VALUES (?, ?, ?, ?, ?)',
-      [name, email, password_hash, role, specialty_id || null]
+      [name, email, password_hash, 'patient', null]
     );
 
     res.status(201).json({
-      message: `🎉 Welcome ${name}! Your ${role} account has been created successfully.`,
+      message: ` Welcome ${name}! Your patient account has been created successfully.`,
       user: {
         id: result.insertId,
         name,
         email,
-        role,
-        specialty_id: specialty_id || null
+        role: 'patient'
       }
     });
   } catch (err) {
@@ -80,7 +76,7 @@ export async function login(req, res) {
     );
 
     res.json({
-      message: `👋 Welcome back, ${user.name}! You are logged in as ${user.role}.`,
+      message: ` Welcome back, ${user.name}! You are logged in as ${user.role}.`,
       token,
       user: {
         id: user.id,
@@ -106,9 +102,12 @@ export async function me(req, res) {
     );
     if (!rows.length) return res.status(404).json({ error: 'User not found' });
 
+    const profile = rows[0];
+    profile.created_at = new Date(profile.created_at).toLocaleString('en-US');
+
     res.json({
-      message: `👤 Welcome ${rows[0].name}, here is your profile information.`,
-      profile: rows[0]
+      message: `Welcome ${profile.name}, here is your profile information.`,
+      profile
     });
   } catch (err) {
     console.error(err);
