@@ -6,6 +6,7 @@ import authRoutes from './routes/authRoutes.js';
 import appointmentRoutes from './routes/appointmentRoutes.js'; 
 import doctorRoutes from './routes/doctorRoutes.js';
 import sponsorshipRoutes from './routes/sponsorshipRoutes.js';
+import messagesRoutes from "./routes/messages.routes.js";
 
 const app = express();
 app.use(cors());
@@ -27,6 +28,8 @@ app.use('/api/v1/appointments', appointmentRoutes);
 app.use('/api/v1/doctors', doctorRoutes);
 
 app.use('/api/v1/sponsorship', sponsorshipRoutes);
+
+app.use("/api/v1/messages", messagesRoutes);
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`✅ Server running at http://localhost:${port}`));
