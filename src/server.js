@@ -2,11 +2,13 @@ import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
 import { pool } from './db.js';
+
 import authRoutes from './routes/authRoutes.js';
-import appointmentRoutes from './routes/appointmentRoutes.js'; 
+import appointmentRoutes from './routes/appointmentRoutes.js';
 import doctorRoutes from './routes/doctorRoutes.js';
 import sponsorshipRoutes from './routes/sponsorshipRoutes.js';
 import messagesRoutes from "./routes/messages.routes.js";
+import medicalRoutes from './routes/medicalRoutes.js'; 
 
 const app = express();
 app.use(cors());
@@ -30,6 +32,8 @@ app.use('/api/v1/doctors', doctorRoutes);
 app.use('/api/v1/sponsorship', sponsorshipRoutes);
 
 app.use("/api/v1/messages", messagesRoutes);
+
+app.use('/api/v1/medical', medicalRoutes); 
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`✅ Server running at http://localhost:${port}`));
