@@ -565,13 +565,14 @@ export async function getReceiptsByCase(req, res) {
 // ===============================
 // عرض جميع الحالات الخاصة بمريض معين (Patient Profile)
 // ===============================
+
 export async function getPatientCases(req, res) {
   try {
-    const { id } = req.params;
+    const { id } = req.params; 
 
-  
+    
     const [patientRows] = await pool.query(
-      `SELECT id, name, role FROM users WHERE id = ? AND role = 'patient'`,
+      `SELECT id, name, email, role, created_at FROM users WHERE id = ? AND role = 'patient'`,
       [id]
     );
 
@@ -581,16 +582,19 @@ export async function getPatientCases(req, res) {
 
     const patient = patientRows[0];
 
-    
-    if (
-      req.user.role === "patient" &&
-      req.user.id !== patient.id
-    ) {
+   
+    if (req.user.role === "patient" && req.user.id !== patient.id) {
       return res.status(403).json({
-        error: "You can only view your own medical cases."
+        error: "You can only view your own medical profile."
       });
     }
 
+    const allowedRoles = ["doctor", "admin", "ngo", "donor", "patient"];
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: "Access denied." });
+    }
+
+    
     const [cases] = await pool.query(
       `
       SELECT id, title, diagnosis, treatment_type, goal_amount, raised_amount, status, created_at
@@ -601,17 +605,25 @@ export async function getPatientCases(req, res) {
       [id]
     );
 
+    
     if (cases.length === 0) {
       return res.json({
         success: true,
-        patient_name: patient.name,
+        patient_profile: {
+          id: patient.id,
+          name: patient.name,
+          email: patient.email,
+          created_at: new Date(patient.created_at).toLocaleString("en-GB")
+        },
         total_cases: 0,
-        message: "This patient has no medical cases yet.",
-        cases: []
+        cases: [],
+        medical_history: [],
+        feedbacks: [],
+        message: "This patient has no medical cases yet."
       });
     }
 
-
+    
     const detailedCases = await Promise.all(
       cases.map(async (c) => {
         const [donations] = await pool.query(
@@ -635,20 +647,22 @@ export async function getPatientCases(req, res) {
           [c.id]
         );
 
+        const progress = ((c.raised_amount / c.goal_amount) * 100).toFixed(1);
+
         return {
           id: c.id,
           title: c.title,
-          diagnosis: c.diagnosis,
+          diagnosis: c.diagnosis || "No diagnosis info",
           treatment_type: c.treatment_type,
           goal_amount: c.goal_amount,
           raised_amount: c.raised_amount,
-          progress: `${((c.raised_amount / c.goal_amount) * 100).toFixed(1)}%`,
+          progress: `${progress}%`,
           status: c.status,
           created_at: new Date(c.created_at).toLocaleString("en-GB"),
           donations: donations.map((d) => ({
             donor_name: d.donor_name,
             amount: d.amount,
-            note: d.note || "—",
+            note: d.note || "No note",
             donated_at: new Date(d.created_at).toLocaleString("en-GB")
           })),
           reports: receipts.map((r) => ({
@@ -660,19 +674,311 @@ export async function getPatientCases(req, res) {
       })
     );
 
+    
+    const [medicalHistory] = await pool.query(
+      `
+      SELECT id, \`condition\`, description, diagnosed_at, verified_by, created_at
+      FROM medical_history
+      WHERE patient_id = ?
+      ORDER BY created_at DESC
+      `,
+      [id]
+    );
+
+    const formattedHistory = medicalHistory.map((h) => ({
+      id: h.id,
+      condition: h.condition,
+      description: h.description || "No description provided",
+      diagnosed_at: h.diagnosed_at
+        ? new Date(h.diagnosed_at).toLocaleDateString("en-GB")
+        : "Unknown",
+      verified_by: h.verified_by || "Not verified",
+      created_at: new Date(h.created_at).toLocaleString("en-GB")
+    }));
+
+  
+    const [feedbacks] = await pool.query(
+      `
+      SELECT f.id, f.feedback, f.created_at, c.title AS case_title
+      FROM feedback f
+      JOIN patient_cases c ON f.case_id = c.id
+      WHERE f.patient_id = ?
+      ORDER BY f.created_at DESC
+      `,
+      [id]
+    );
+
+    const formattedFeedbacks = feedbacks.map((f) => ({
+      id: f.id,
+      case_title: f.case_title,
+      feedback: f.feedback,
+      created_at: new Date(f.created_at).toLocaleString("en-GB")
+    }));
+
+    
     res.status(200).json({
       success: true,
-      patient_name: patient.name,
+      patient_profile: {
+        id: patient.id,
+        name: patient.name,
+        email: patient.email,
+        created_at: new Date(patient.created_at).toLocaleString("en-GB")
+      },
       total_cases: detailedCases.length,
+      medical_history: formattedHistory,
+      feedbacks: formattedFeedbacks,
       cases: detailedCases
     });
   } catch (err) {
-    console.error(" Error fetching patient cases:", err);
+    console.error(" Error fetching patient profile:", err);
     res.status(500).json({ error: "Server error", details: err.message });
   }
 }
 
 
+
+// ===============================
+//  إضافة ملاحظات المريض بعد العلاج (Feedback)
+// ===============================
+export async function addFeedback(req, res) {
+  try {
+    
+    if (req.user.role !== "patient") {
+      return res.status(403).json({ error: "Only patients can add feedback." });
+    }
+
+    const { case_id, feedback } = req.body;
+
+  
+    if (!case_id || !feedback) {
+      return res.status(400).json({ error: "case_id and feedback are required." });
+    }
+
+  
+    const [caseCheck] = await pool.query(
+      `SELECT id, status FROM patient_cases WHERE id = ? AND patient_id = ?`,
+      [case_id, req.user.id]
+    );
+
+    if (caseCheck.length === 0) {
+      return res.status(404).json({ error: "Case not found or not owned by this patient." });
+    }
+
+  
+    const caseStatus = caseCheck[0].status;
+    if (!["funded", "closed"].includes(caseStatus)) {
+      return res.status(400).json({
+        error: "You can only add feedback after your case has been funded or closed.",
+      });
+    }
+
+   
+    const [result] = await pool.query(
+      `
+      INSERT INTO feedback (case_id, patient_id, feedback)
+      VALUES (?, ?, ?)
+      `,
+      [case_id, req.user.id, feedback.trim()]
+    );
+
+    const formattedDate = new Date().toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Feedback added successfully.",
+      feedback: {
+        id: result.insertId,
+        case_id,
+        patient_id: req.user.id,
+        feedback,
+        created_at: formattedDate,
+      },
+    });
+  } catch (err) {
+    console.error("Error adding feedback:", err);
+    res.status(500).json({ error: "Server error", details: err.message });
+  }
+}
+
+
+// ===============================
+// إضافة سجل طبي جديد للمريض (مع خاصية الموافقة)
+// ===============================
+export async function addMedicalHistory(req, res) {
+  try {
+    if (!["doctor", "admin"].includes(req.user.role)) {
+      return res.status(403).json({ error: "Only doctors or admins can add medical history." });
+    }
+
+    const { patient_id, condition, description, diagnosed_at, consent_given } = req.body;
+
+    if (!patient_id || !condition) {
+      return res.status(400).json({ error: "patient_id and condition are required." });
+    }
+
+    const [userCheck] = await pool.query(
+      `SELECT id, name, role FROM users WHERE id = ? AND role = 'patient'`,
+      [patient_id]
+    );
+
+    if (userCheck.length === 0) {
+      return res.status(404).json({ error: "Patient not found." });
+    }
+
+    const verifiedBy = req.user.name;
+
+    const [result] = await pool.query(
+      `
+      INSERT INTO medical_history (patient_id, \`condition\`, description, diagnosed_at, verified_by, consent_given)
+      VALUES (?, ?, ?, ?, ?, ?)
+      `,
+      [
+        patient_id,
+        condition.trim(),
+        description || "",
+        diagnosed_at || null,
+        verifiedBy,
+        consent_given ? 1 : 0,
+      ]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: `Medical history added successfully for patient ${userCheck[0].name}.`,
+      history: {
+        id: result.insertId,
+        patient_id,
+        condition,
+        description: description || "No description provided",
+        diagnosed_at: diagnosed_at || "Not specified",
+        verified_by: verifiedBy,
+        consent_given: !!consent_given,
+      },
+    });
+  } catch (err) {
+    console.error("Error adding medical history:", err);
+    res.status(500).json({ error: "Server error", details: err.message });
+  }
+}
+
+
+// ===============================
+//  عرض السجل الطبي لمريض معين (مع  الموافقة)
+// ===============================
+export async function getMedicalHistory(req, res) {
+  try {
+    const { patient_id } = req.params;
+
+    const [patientRows] = await pool.query(
+      `SELECT id, name, role FROM users WHERE id = ? AND role = 'patient'`,
+      [patient_id]
+    );
+
+    if (patientRows.length === 0) {
+      return res.status(404).json({ error: "Patient not found." });
+    }
+
+    const isPatient = req.user.role === "patient" && req.user.id === Number(patient_id);
+
+    const [rows] = await pool.query(
+      `
+      SELECT id, \`condition\`, description, diagnosed_at, verified_by, created_at, consent_given
+      FROM medical_history
+      WHERE patient_id = ?
+      ${isPatient ? "" : "AND consent_given = TRUE"}
+      ORDER BY created_at DESC
+      `,
+      [patient_id]
+    );
+
+    const formatted = rows.map((r) => {
+      const formatDate = (dateValue) => {
+        if (!dateValue) return "Unknown";
+        const d = new Date(dateValue);
+        return isNaN(d.getTime())
+          ? dateValue
+          : d.toLocaleString("en-GB", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            });
+      };
+
+      return {
+        id: r.id,
+        condition: r.condition,
+        description: r.description || "No description provided",
+        diagnosed_at: formatDate(r.diagnosed_at),
+        verified_by: r.verified_by || "Not verified",
+        consent_given: !!r.consent_given,
+        created_at: formatDate(r.created_at),
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      patient_name: patientRows[0].name,
+      total_records: formatted.length,
+      medical_history: formatted,
+    });
+  } catch (err) {
+    console.error("Error fetching medical history:", err);
+    res.status(500).json({ error: "Server error", details: err.message });
+  }
+}
+
+// ===============================
+// ✅ المريض يحدث الموافقة على سجل طبي معين
+// ===============================
+export async function updateMedicalConsent(req, res) {
+  try {
+    if (req.user.role !== "patient") {
+      return res.status(403).json({ error: "Only patients can update consent." });
+    }
+
+    const { record_id, consent_given } = req.body;
+
+    if (!record_id || typeof consent_given !== "boolean") {
+      return res
+        .status(400)
+        .json({ error: "record_id and consent_given (true/false) are required." });
+    }
+
+    const [check] = await pool.query(
+      `SELECT id, patient_id FROM medical_history WHERE id = ? AND patient_id = ?`,
+      [record_id, req.user.id]
+    );
+
+    if (check.length === 0) {
+      return res.status(404).json({ error: "Record not found or not owned by this patient." });
+    }
+
+    await pool.query(
+      `UPDATE medical_history SET consent_given = ? WHERE id = ?`,
+      [consent_given ? 1 : 0, record_id]
+    );
+
+    res.json({
+      success: true,
+      message: `Consent has been ${consent_given ? "granted" : "revoked"} successfully.`,
+      record_id,
+      consent_given,
+    });
+  } catch (err) {
+    console.error("Error updating consent:", err);
+    res.status(500).json({ error: "Server error", details: err.message });
+  }
+}
 
 // ===============================
 // (Transparency Dashboard)
@@ -739,4 +1045,3 @@ export async function getTransparencyDashboard(req, res) {
     res.status(500).json({ error: "Server error", details: err.message });
   }
 }
-

@@ -1,11 +1,11 @@
 import { pool } from '../db.js';
 
 // ===============================
-// create appointmint
+// create appointment
 // ===============================
 export async function createAppointment(req, res) {
   try {
-    const { doctor_id, appointment_date, appointment_time, mode = 'video', translation_enabled = false } = req.body;
+    const { doctor_id, appointment_date, appointment_time, mode = 'video', translation_enabled = false, low_bandwidth = false } = req.body;
 
     if (req.user.role !== 'patient') {
       return res.status(403).json({ error: 'Only patients can create appointments' });
@@ -18,6 +18,12 @@ export async function createAppointment(req, res) {
     const allowedModes = ['video', 'audio', 'text'];
     if (!allowedModes.includes(mode)) {
       return res.status(400).json({ error: `Invalid mode. Allowed values are: ${allowedModes.join(', ')}` });
+    }
+
+    // 🔹 إذا المريض مفعّل low-bandwidth يتحول تلقائيًا إلى audio mode
+    let finalMode = mode;
+    if (low_bandwidth && mode === 'video') {
+      finalMode = 'audio';
     }
 
     let time = appointment_time.trim();
@@ -52,11 +58,12 @@ export async function createAppointment(req, res) {
       return res.status(409).json({ error: 'This time slot is already booked for this doctor' });
     }
 
+    // 🔹 أضفنا low_bandwidth في قاعدة البيانات
     const [result] = await pool.query(
       `INSERT INTO appointments 
-       (patient_id, doctor_id, appointment_date, appointment_time, mode, translation_enabled) 
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [req.user.id, doctor_id, appointment_date, appointment_time, mode, translation_enabled]
+       (patient_id, doctor_id, appointment_date, appointment_time, mode, translation_enabled, low_bandwidth) 
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [req.user.id, doctor_id, appointment_date, appointment_time, finalMode, translation_enabled, low_bandwidth]
     );
 
     const [appointmentData] = await pool.query(
@@ -66,6 +73,7 @@ export async function createAppointment(req, res) {
          a.appointment_time,
          a.mode,
          a.translation_enabled,
+         a.low_bandwidth,
          a.status,
          p.name AS patient_name,
          d.name AS doctor_name
@@ -77,9 +85,7 @@ export async function createAppointment(req, res) {
     );
 
     const appointment = appointmentData[0];
-
-    const localDate = new Date(appointment.appointment_date);
-    const formattedDate = localDate.toISOString().split('T')[0];
+    const formattedDate = new Date(appointment.appointment_date).toISOString().split('T')[0];
     const formattedTime = appointment.appointment_time.slice(0, 8);
 
     const formattedAppointment = {
@@ -90,6 +96,7 @@ export async function createAppointment(req, res) {
       appointment_time: formattedTime,
       mode: appointment.mode,
       translation_enabled: Boolean(appointment.translation_enabled),
+      low_bandwidth: Boolean(appointment.low_bandwidth),
       status: appointment.status
     };
 
@@ -104,11 +111,9 @@ export async function createAppointment(req, res) {
   }
 }
 
-
 // ===============================
 // get appointments (for patient or doctor)
 // ===============================
-
 export async function getAppointments(req, res) {
   try {
     let query = '';
@@ -122,6 +127,7 @@ export async function getAppointments(req, res) {
           a.appointment_time,
           a.mode,
           a.translation_enabled,
+          a.low_bandwidth,
           a.status,
           u.name AS doctor_name,
           p.name AS patient_name
@@ -140,6 +146,7 @@ export async function getAppointments(req, res) {
           a.appointment_time,
           a.mode,
           a.translation_enabled,
+          a.low_bandwidth,
           a.status,
           p.name AS patient_name,
           u.name AS doctor_name
@@ -157,8 +164,7 @@ export async function getAppointments(req, res) {
     const [rows] = await pool.query(query, params);
 
     const formattedAppointments = rows.map(a => {
-      const localDate = new Date(a.appointment_date);
-      const formattedDate = localDate.toISOString().split('T')[0];
+      const formattedDate = new Date(a.appointment_date).toISOString().split('T')[0];
       const formattedTime = a.appointment_time.slice(0, 8);
       return {
         id: a.id,
@@ -168,6 +174,7 @@ export async function getAppointments(req, res) {
         appointment_time: formattedTime,
         mode: a.mode,
         translation_enabled: Boolean(a.translation_enabled),
+        low_bandwidth: Boolean(a.low_bandwidth),
         status: a.status
       };
     });
@@ -182,7 +189,6 @@ export async function getAppointments(req, res) {
     res.status(500).json({ error: 'Server error', details: err.message });
   }
 }
-
 
 // ===============================
 // Update Appointment Status
@@ -204,29 +210,22 @@ export async function updateAppointmentStatus(req, res) {
 
     const appointment = existing[0];
 
-  
     if (req.user.role === 'doctor' || req.user.role === 'admin') {
       if (req.user.role === 'doctor' && req.user.id !== appointment.doctor_id) {
         return res.status(403).json({ error: 'You can only update your own appointments' });
       }
-    }
-
-    
-    else if (req.user.role === 'patient') {
+    } else if (req.user.role === 'patient') {
       if (req.user.id !== appointment.patient_id) {
         return res.status(403).json({ error: 'You can only cancel your own appointments' });
       }
       if (status !== 'cancelled') {
         return res.status(403).json({ error: 'Patients can only cancel appointments' });
       }
-    }
-
-    else {
+    } else {
       return res.status(403).json({ error: 'Unauthorized role' });
     }
 
     await pool.query('UPDATE appointments SET status = ? WHERE id = ?', [status, id]);
-
     res.json({ message: 'Appointment status updated', id, new_status: status });
   } catch (err) {
     console.error(err);

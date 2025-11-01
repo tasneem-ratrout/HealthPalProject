@@ -7,7 +7,11 @@ import {
   addReceipt,
   getReceiptsByCase,
   getPatientCases,  
-  getTransparencyDashboard
+  getTransparencyDashboard,
+  addFeedback,
+  addMedicalHistory,      
+  getMedicalHistory,
+  updateMedicalConsent
 } from '../controllers/sponsorshipController.js';
 import { requireAuth } from '../middleware/auth.js';
 
@@ -26,7 +30,15 @@ router.get('/donations', requireAuth, getMyDonations);
 router.post('/receipts', requireAuth, addReceipt);
 router.get('/receipts/:case_id', requireAuth, getReceiptsByCase);
 
-//Transparency Dashboard
+// Transparency Dashboard
 router.get('/dashboard/transparency', requireAuth, getTransparencyDashboard);
+
+// feedback
+router.post('/feedback', requireAuth, addFeedback);
+
+// medical history 
+router.post('/medical-history', requireAuth, addMedicalHistory);
+router.get('/medical-history/:patient_id', requireAuth, getMedicalHistory);
+router.patch('/medical-history/consent', requireAuth, updateMedicalConsent); //  موافقة المريض
 
 export default router;
