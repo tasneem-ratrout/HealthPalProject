@@ -16,6 +16,7 @@ export async function addNGODetails(req, res) {
       return res.status(404).json({ error: 'NGO user not found' });
     }
 
+<<<<<<< HEAD
     const ngoName = userCheck[0].name;
     const ngoEmail = userCheck[0].email;
     const [existing] = await pool.query('SELECT * FROM ngos WHERE id = ?', [id]);
@@ -25,6 +26,13 @@ export async function addNGODetails(req, res) {
     await pool.query(
       'INSERT INTO ngos (id, name, email, phone, address) VALUES (?, ?, ?, ?, ?)',
       [id, ngoName, ngoEmail, phone || null, address || null]
+=======
+    if (!name) return res.status(400).json({ error: 'NGO name is required' });
+
+    const [result] = await pool.query(
+      'INSERT INTO ngos (name, email, phone, address) VALUES (?, ?, ?, ?)',
+      [name, email || null, phone || null, address || null]
+>>>>>>> d8d057abb52cecfb6571eda6a43e591e9b6e801d
     );
 
     res.status(201).json({
@@ -96,6 +104,7 @@ export async function deleteNGO(req, res) {
     console.error('Error deleting NGO:', err);
     res.status(500).json({ error: 'Server error', details: err.message });
   }
+<<<<<<< HEAD
 }
 
 /* =========================================================
@@ -163,4 +172,7 @@ export async function searchNGOs(req, res) {
     console.error('Error searching NGOs:', err);
     res.status(500).json({ error: 'Server error', details: err.message });
   }
+=======
+
+>>>>>>> d8d057abb52cecfb6571eda6a43e591e9b6e801d
 }

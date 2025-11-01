@@ -1,6 +1,7 @@
 // src/routes/ngoRoutes.js
 import express from 'express';
 import { requireAuth } from '../middleware/auth.js';
+<<<<<<< HEAD
 import { 
     addNGODetails
     ,updateNGO
@@ -16,6 +17,14 @@ router.delete('/delete-ngo/:id', requireAuth, deleteNGO);
 router.get('/ngos', requireAuth, getAllNGOs);
 router.get('/search-ngos', requireAuth, searchNGOs);
 
+=======
+import { addNGO ,verifyNGO} from '../controllers/ngoController.js'; 
+
+const router = express.Router();
+
+router.post('/add-ngo', requireAuth, addNGO);
+router.patch('/verify-ngo/:id', requireAuth, verifyNGO);
+>>>>>>> d8d057abb52cecfb6571eda6a43e591e9b6e801d
 
 export default router;
 
