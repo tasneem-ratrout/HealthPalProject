@@ -173,6 +173,5 @@ export async function searchNGOs(req, res) {
     res.status(500).json({ error: 'Server error', details: err.message });
   }
 =======
-
->>>>>>> d8d057abb52cecfb6571eda6a43e591e9b6e801d
 }
+
