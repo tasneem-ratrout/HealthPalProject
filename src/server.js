@@ -4,7 +4,8 @@ import dotenv from 'dotenv';
 import { pool } from './db.js';
 import adminRoutes from './routes/adminRoutes.js';
 import authRoutes from './routes/authRoutes.js';
-import ngoRoutes from './routes/ngoRoutes.js'; // ✅ تأكدي منه
+import ngoRoutes from './routes/ngoRoutes.js'; 
+import missionRoutes from './routes/missionRoutes.js';
 
 dotenv.config();
 
@@ -16,7 +17,8 @@ app.use(express.json());
 app.get('/', (req, res) => res.send('HealthPal API Running ✅'));
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/ngo', ngoRoutes); // ✅ خليه هيك (مش ngoRoutes)
+app.use('/api/v1/ngo', ngoRoutes); 
+app.use('/api/v1/missions', missionRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () =>

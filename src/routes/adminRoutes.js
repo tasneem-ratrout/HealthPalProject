@@ -4,7 +4,6 @@ import { createUser
     ,deleteUser 
     ,updateUser
     ,toggleUserStatus
-    ,verifyDoctor 
     , getAllUsers
     ,resetUserPassword
     ,searchUsers
@@ -15,7 +14,6 @@ router.post('/create-user', requireAuth, createUser);
 router.delete('/delete-user/:id', requireAuth, deleteUser);
 router.put('/update-user/:id', requireAuth, updateUser);
 router.patch('/toggle-user/:id', requireAuth, toggleUserStatus);
-router.patch('/verify-doctor/:id', requireAuth, verifyDoctor);
 router.get('/users', requireAuth, getAllUsers);
 router.patch('/reset-password/:id', requireAuth, resetUserPassword);
 router.get('/search-users', requireAuth, searchUsers);

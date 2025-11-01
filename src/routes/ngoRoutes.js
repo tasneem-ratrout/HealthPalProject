@@ -1,12 +1,21 @@
 // src/routes/ngoRoutes.js
 import express from 'express';
 import { requireAuth } from '../middleware/auth.js';
-import { addNGO ,verifyNGO} from '../controllers/ngoController.js'; // ✅ صح الآن
+import { 
+    addNGODetails
+    ,updateNGO
+    , deleteNGO
+    , getAllNGOs
+    , searchNGOs} from '../controllers/ngoController.js';
 
 const router = express.Router();
 
-// ✅ مسار إضافة منظمة جديدة
-router.post('/add-ngo', requireAuth, addNGO);
-router.patch('/verify-ngo/:id', requireAuth, verifyNGO);
+router.post('/add-details/:id', requireAuth, addNGODetails);
+router.put('/update-ngo/:id', requireAuth, updateNGO);
+router.delete('/delete-ngo/:id', requireAuth, deleteNGO);
+router.get('/ngos', requireAuth, getAllNGOs);
+router.get('/search-ngos', requireAuth, searchNGOs);
+
 
 export default router;
+
