@@ -6,17 +6,14 @@ import { pool } from '../db.js';
 ========================================================= */
 export async function addNGO(req, res) {
   try {
-    // ✅ فقط الأدمن يقدر يضيف منظمة
     if (req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Only admin can add NGOs' });
     }
 
     const { name, email, phone, address } = req.body;
 
-    // 🔸 التحقق من الاسم
     if (!name) return res.status(400).json({ error: 'NGO name is required' });
 
-    // ✅ إدخال المنظمة بقاعدة البيانات
     const [result] = await pool.query(
       'INSERT INTO ngos (name, email, phone, address) VALUES (?, ?, ?, ?)',
       [name, email || null, phone || null, address || null]
@@ -54,4 +51,5 @@ export async function verifyNGO(req, res) {
     console.error('Error verifying NGO:', err);
     res.status(500).json({ error: 'Server error', details: err.message });
   }
+
 }
