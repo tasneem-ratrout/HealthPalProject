@@ -24,7 +24,7 @@ const router = express.Router();
 
 router.post('/add-ngo', requireAuth, addNGO);
 router.patch('/verify-ngo/:id', requireAuth, verifyNGO);
->>>>>>> d8d057abb52cecfb6571eda6a43e591e9b6e801d
 
 export default router;
+
 
