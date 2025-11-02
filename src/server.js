@@ -22,7 +22,9 @@ app.get('/api/health', async (_req, res) => {
 });
 
 app.use('/api/v1/auth', authRoutes);
+// app.use('/api/v1/guides', guidesRoutes);
 app.use('/api/v1/guides', guidesRoutes);
+
 // app.use('/api/v1/alerts', alertsRoutes);
 
 const port = process.env.PORT || 3000;
