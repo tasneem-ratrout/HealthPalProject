@@ -1,10 +1,12 @@
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
-import { pool } from './db.js'; // ✅ db داخل src
-import authRoutes from './routes/authRoutes.js'; // ✅ كل الراوتات داخل src
+import { pool } from './db.js'; 
+import authRoutes from './routes/authRoutes.js'; 
 import guidesRoutes from './routes/guidesRoutes.js';
-// import alertsRoutes from './routes/alertsRoutes.js';
+
+import alertsRoutes from './routes/alertsRoutes.js';
+
 
 const app = express();
 app.use(cors());
@@ -24,6 +26,8 @@ app.get('/api/health', async (_req, res) => {
 app.use('/api/v1/auth', authRoutes);
 // app.use('/api/v1/guides', guidesRoutes);
 app.use('/api/v1/guides', guidesRoutes);
+app.use('/api/v1/alerts', alertsRoutes);
+
 
 // app.use('/api/v1/alerts', alertsRoutes);
 
