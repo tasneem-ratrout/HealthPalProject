@@ -6,6 +6,8 @@ import adminRoutes from './routes/adminRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import ngoRoutes from './routes/ngoRoutes.js'; 
 import missionRoutes from './routes/missionRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
+import postRoutes from './routes/postRoutes.js';
 
 dotenv.config();
 
@@ -16,9 +18,11 @@ app.use(express.json());
 // ✅ Routes
 app.get('/', (req, res) => res.send('HealthPal API Running ✅'));
 app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/ngo', ngoRoutes); 
 app.use('/api/v1/missions', missionRoutes);
+app.use('/api/v1/post', postRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () =>
