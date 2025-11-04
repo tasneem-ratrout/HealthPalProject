@@ -6,38 +6,30 @@ import { pool } from '../db.js';
 ========================================================= */
 export async function createUser(req, res) {
   try {
-    // ✅ السماح فقط للإدمن بإنشاء المستخدمين
     if (req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Only admin can create users' });
     }
     const { name, email, password, role, specialty_id } = req.body;
 
-    // 🔸 التحقق من الحقول الأساسية
     if (!name || !email || !password || !role) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // 🔸 التأكد من أن الإيميل غير مستخدم
     const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
     if (existing.length > 0) {
       return res.status(409).json({ error: 'Email already exists' });
     }
 
-    // 🔸 تشفير كلمة المرور
     const password_hash = await bcrypt.hash(password, 10);
 
-    // 🧠 معالجة كل نوع من المستخدمين
     if (role === 'doctor' && !specialty_id) {
       return res.status(400).json({ error: 'Doctor must have a specialty_id' });
     }
 
-    // ✅ تنفيذ الإدخال في قاعدة البيانات
     const [result] = await pool.query(
       'INSERT INTO users (name, email, password_hash, role, specialty_id) VALUES (?, ?, ?, ?, ?)',
       [name, email, password_hash, role, specialty_id || null]
     );
-
-    // 🔹 رسالة النجاح
     res.status(201).json({
       message: `✅ ${role.charAt(0).toUpperCase() + role.slice(1)} created successfully by Admin`,
       user: {
@@ -269,4 +261,5 @@ export async function searchUsers(req, res) {
     res.status(500).json({ error: 'Server error', details: err.message });
   }
 }
+
 
