@@ -10,6 +10,8 @@ import alertsRoutes from './routes/alertsRoutes.js';
 import workshopsRoutes from './routes/workshopsRoutes.js';
 
 import registrationsRoutes from './routes/registrationsRoutes.js';
+import sessionsRoutes from './routes/sessionsRoutes.js';
+
 //import "./services/reminderJob.js";
 
 const app = express();
@@ -33,9 +35,12 @@ app.use('/api/v1/alerts', alertsRoutes);
 
 app.use('/api/v1/workshops', workshopsRoutes);
 app.use('/api/v1/registrations', registrationsRoutes);
+app.use('/api/v1/sessions', sessionsRoutes);
 
 
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`✅ Server running at http://localhost:${port}`));
 import "./services/reminderCron.js";
+import "./services/reminderJob.js";
+
