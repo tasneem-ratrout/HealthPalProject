@@ -1,6 +1,5 @@
 import { pool } from '../db.js';
 
-// ✅ عرض جميع الأدلة
 const getGuides = async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM health_guides ORDER BY created_at DESC');
@@ -10,7 +9,6 @@ const getGuides = async (req, res) => {
   }
 };
 
-// ✅ عرض دليل واحد
 const getGuideById = async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM health_guides WHERE id = ?', [req.params.id]);
@@ -21,7 +19,6 @@ const getGuideById = async (req, res) => {
   }
 };
 
-// ✅ إنشاء دليل جديد
 const createGuide = async (req, res) => {
   const { title, content, category, lang } = req.body;
   const userId = req.user.id;
@@ -40,7 +37,6 @@ const createGuide = async (req, res) => {
   }
 };
 
-// ✅ تحديث دليل
 const updateGuide = async (req, res) => {
   const { title, content, category, lang } = req.body;
   try {
@@ -52,9 +48,8 @@ const updateGuide = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-};
+}; // ✅ أغلقي الدالة هنا
 
-// ✅ حذف دليل
 const deleteGuide = async (req, res) => {
   try {
     await pool.query('DELETE FROM health_guides WHERE id=?', [req.params.id]);
@@ -64,5 +59,4 @@ const deleteGuide = async (req, res) => {
   }
 };
 
-// 🔹 تصدير كل الدوال
 export { getGuides, getGuideById, createGuide, updateGuide, deleteGuide };
