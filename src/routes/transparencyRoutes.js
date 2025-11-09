@@ -9,10 +9,9 @@ import {
 } from '../controllers/transparencyController.js';
 
 const router = express.Router();
-
-router.get('/transparency/financial-overview', requireAuth, financialOverview);
-router.get('/transparency/donation-tracking', requireAuth, donationTracking);
-router.get('/trsansparency/fairness', requireAuth, fairnessReport);
-router.get('/transparency/ngo/:id', requireAuth, ngoTransparencyProfile);
+router.get('/financial-overview', requireAuth, financialOverview);
+router.get('/donation-tracking', requireAuth, donationTracking);
+router.get('/fairness', requireAuth, fairnessReport);
+router.get('/ngo/:id', requireAuth, ngoTransparencyProfile);
 
 export default router;

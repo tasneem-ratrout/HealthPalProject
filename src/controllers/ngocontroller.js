@@ -81,7 +81,7 @@ export async function updateNGO(req, res) {
 }
 
 /* =========================================================
-   🗑️ حذف منظمة (Admin Only)
+   حذف منظمة (Admin Only)
 ========================================================= */
 export async function deleteNGO(req, res) {
   try {
@@ -105,7 +105,7 @@ export async function deleteNGO(req, res) {
 }
 
 /* =========================================================
-   👀 عرض جميع المنظمات (Admin Only)
+   عرض جميع المنظمات (Admin Only)
 ========================================================= */
 export async function getAllNGOs(req, res) {
   try {
@@ -131,7 +131,7 @@ export async function getAllNGOs(req, res) {
 }
 
 /* =========================================================
-   🔍 البحث عن منظمة (Admin Only)
+  البحث عن منظمة (Admin Only)
 ========================================================= */
 export async function searchNGOs(req, res) {
   try {

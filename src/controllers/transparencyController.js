@@ -2,7 +2,7 @@
 import { pool } from '../db.js';
 
 /* =========================================================
-   1️⃣ الشفافية المالية العامة
+  الشفافية المالية العامة (Financial Overview)
 ========================================================= */
 export async function financialOverview(req, res) {
   try {
@@ -25,7 +25,7 @@ export async function financialOverview(req, res) {
 }
 
 /* =========================================================
-   2️⃣ تتبع أثر التبرعات
+  (Donation Tracking)
 ========================================================= */
 export async function donationTracking(req, res) {
   try {
@@ -44,12 +44,12 @@ export async function donationTracking(req, res) {
 }
 
 /* =========================================================
-   3️⃣ التوزيع العادل للموارد
+   تقرير الاستخدام العادل (Fair Distribution)
 ========================================================= */
 export async function fairnessReport(req, res) {
   try {
     const [rows] = await pool.query(`
-      SELECT n.name AS ngo_name, SUM(ma.id IS NOT NULL) AS aids_provided
+      SELECT n.name AS ngo_name, COUNT(ma.id) AS aids_provided
       FROM ngos n
       LEFT JOIN medical_aid ma ON ma.ngo_id = n.id
       GROUP BY n.id
@@ -62,7 +62,7 @@ export async function fairnessReport(req, res) {
 }
 
 /* =========================================================
-   4️⃣ ملف شفاف لكل منظمة
+   ملف شفاف للمنظمة (NGO Transparency Profile)
 ========================================================= */
 export async function ngoTransparencyProfile(req, res) {
   try {

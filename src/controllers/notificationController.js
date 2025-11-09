@@ -1,7 +1,7 @@
 import { pool } from '../db.js';
 
 /* =========================================================
-   1️⃣ إرسال تنبيه جديد (Admin Only)
+  إرسال تنبيه جديد (Admin Only)
 ========================================================= */
 export async function createNotification(req, res) {
   try {
@@ -35,7 +35,7 @@ export async function createNotification(req, res) {
 }
 
 /* =========================================================
-   2️⃣ عرض جميع التنبيهات (Admin Only)
+ عرض جميع التنبيهات (Admin Only)
 ========================================================= */
 export async function getAllNotifications(req, res) {
   try {
@@ -58,7 +58,7 @@ export async function getAllNotifications(req, res) {
 }
 
 /* =========================================================
-   3️⃣ حذف تنبيه (Admin Only)
+حذف تنبيه (Admin Only)
 ========================================================= */
 export async function deleteNotification(req, res) {
   try {

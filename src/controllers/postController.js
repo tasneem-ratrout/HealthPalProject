@@ -1,7 +1,7 @@
 import { pool } from '../db.js';
 
 /* =========================================================
-   1️⃣ إضافة منشور جديد (Admin Only)
+إضافة منشور جديد (Admin Only)
 ========================================================= */
 export async function addPost(req, res) {
   try {
@@ -32,7 +32,7 @@ const [result] = await pool.query(
 }
 
 /* =========================================================
-   2️⃣ تعديل منشور (Admin Only)
+    تعديل منشور (Admin Only)
 ========================================================= */
 export async function updatePost(req, res) {
   try {
@@ -70,7 +70,7 @@ export async function updatePost(req, res) {
 }
 
 /* =========================================================
-   3️⃣ حذف منشور (Admin Only)
+حذف منشور (Admin Only)
 ========================================================= */
 export async function deletePost(req, res) {
   try {
@@ -93,7 +93,7 @@ export async function deletePost(req, res) {
 }
 
 /* =========================================================
-   4️⃣ عرض جميع المنشورات (لكل المستخدمين)
+ عرض جميع المنشورات (لكل المستخدمين)
 ========================================================= */
 export async function getAllPosts(req, res) {
   try {
@@ -119,7 +119,7 @@ export async function getAllPosts(req, res) {
 }
 
 /* =========================================================
-   5️⃣ البحث عن منشور (عام)
+ البحث عن منشور (عام)
 ========================================================= */
 export async function searchPosts(req, res) {
   try {

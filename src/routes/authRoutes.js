@@ -8,13 +8,8 @@ router.get('/ping', (_req, res) => {
   res.json({ ok: true, route: 'auth', time: new Date().toISOString() });
 });
 
-// ✅ Register
 router.post('/register', register);
-
-// ✅ Login
 router.post('/login', login);
-
-// ✅ Get current user info (needs token)
 router.get('/me', requireAuth, me);
 
 export default router;
