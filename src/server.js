@@ -12,6 +12,9 @@ import workshopsRoutes from './routes/workshopsRoutes.js';
 import registrationsRoutes from './routes/registrationsRoutes.js';
 import sessionsRoutes from './routes/sessionsRoutes.js';
 
+import supportGroupsRoutes from './routes/supportGroupsRoutes.js';
+
+
 //import "./services/reminderJob.js";
 
 const app = express();
@@ -36,6 +39,8 @@ app.use('/api/v1/alerts', alertsRoutes);
 app.use('/api/v1/workshops', workshopsRoutes);
 app.use('/api/v1/registrations', registrationsRoutes);
 app.use('/api/v1/sessions', sessionsRoutes);
+app.use('/api/v1/supportgroup', supportGroupsRoutes);
+
 
 
 
