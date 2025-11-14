@@ -61,7 +61,7 @@ import registrationsRoutes from './routes/registrationsRoutes.js';
 import sessionsRoutes from './routes/sessionsRoutes.js';
 import supportGroupsRoutes from './routes/supportGroupsRoutes.js';
 import anonymousRoutes from './routes/anonymousRoutes.js';
-
+import drugRoutes from "./routes/drugRoutes.js";
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 
@@ -80,11 +80,10 @@ app.use('/api/v1/sessions', sessionsRoutes);
 app.use('/api/v1/supportgroup', supportGroupsRoutes);
 app.use('/api/v1/anonymous', anonymousRoutes);
 
-// إنشاء HTTP server وربطه مع Socket.IO
+app.use('/api/v1/drugs', drugRoutes);
 const httpServer = createServer(app);
 export const io = new Server(httpServer, { cors: { origin: "*" } });
 
-// مثال على الـ Socket
 io.on('connection', (socket) => {
   console.log('New client connected:', socket.id);
 
@@ -103,10 +102,8 @@ io.on('connection', (socket) => {
   });
 });
 
-// تشغيل السيرفر
 const port = process.env.PORT || 3000;
 httpServer.listen(port, () => console.log(`✅ Server running at http://localhost:${port}`));
 
-// تفعيل reminders
 import "./services/reminderCron.js";
 import "./services/reminderJob.js";
