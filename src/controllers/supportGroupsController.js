@@ -9,7 +9,7 @@ export const createGroup = async (req, res) => {
        VALUES (?, ?, ?, ?)`,
       [name, description || null, topic || 'general', moderator_id || null]
     );
-    // if moderator_id provided, also add to group_members as moderator
+    // if moderator_id providedd, also add to group_members as moderator
     if (moderator_id) {
       await pool.query(
         `INSERT IGNORE INTO group_members (group_id, user_id, role) VALUES (?, ?, 'moderator')`,
@@ -23,7 +23,7 @@ export const createGroup = async (req, res) => {
   }
 };
 
-// LIST groups (paged optional)
+// LIST groups (paged optional)))))))
 export const listGroups = async (req, res) => {
   try {
     const page = parseInt(req.query.page || '1', 10);
@@ -57,13 +57,13 @@ export const getGroup = async (req, res) => {
   }
 };
 
-// Join group
+// Join grouppppp
 export const joinGroup = async (req, res) => {
   try {
     const groupId = req.params.id;
     const userId = req.user.id;
 
-    // check exists
+    // check existssss
     const [[grp]] = await pool.query(`SELECT id FROM support_groups WHERE id = ?`, [groupId]);
     if (!grp) return res.status(404).json({ message: 'Group not found' });
 
@@ -79,7 +79,7 @@ export const joinGroup = async (req, res) => {
   }
 };
 
-// Leave group
+// Leave grouppppppp
 export const leaveGroup = async (req, res) => {
   try {
     const groupId = req.params.id;
