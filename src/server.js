@@ -63,7 +63,6 @@ import supportGroupsRoutes from './routes/supportGroupsRoutes.js';
 import anonymousRoutes from './routes/anonymousRoutes.js';
 import drugRoutes from "./routes/drugRoutes.js";
 import exercisesRoutes from "./routes/exercisesRoutes.js";
-
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 
