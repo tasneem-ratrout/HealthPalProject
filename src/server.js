@@ -62,8 +62,11 @@ import sessionsRoutes from './routes/sessionsRoutes.js';
 import supportGroupsRoutes from './routes/supportGroupsRoutes.js';
 import anonymousRoutes from './routes/anonymousRoutes.js';
 import drugRoutes from "./routes/drugRoutes.js";
+import exercisesRoutes from "./routes/exercisesRoutes.js";
+
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+
 
 import { v4 as uuidv4 } from 'uuid';
 const app = express();
@@ -81,6 +84,7 @@ app.use('/api/v1/supportgroup', supportGroupsRoutes);
 app.use('/api/v1/anonymous', anonymousRoutes);
 
 app.use('/api/v1/drugs', drugRoutes);
+app.use('/api/v1/exercises', exercisesRoutes);
 const httpServer = createServer(app);
 export const io = new Server(httpServer, { cors: { origin: "*" } });
 
