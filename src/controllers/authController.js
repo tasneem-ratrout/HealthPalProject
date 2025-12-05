@@ -13,18 +13,26 @@ export async function register(req, res) {
       return res.status(400).json({ error: 'Name, email, and password are required' });
     }
 
-    const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
+    const [existing] = await pool.query(
+      'SELECT id FROM users WHERE email = ?',
+      [email]
+    );
+
     if (existing.length > 0) {
-      return res.status(409).json({ error: 'This email is already registered. Please log in instead.' });
+      return res.status(409).json({
+        error: 'This email is already registered. Please log in instead.'
+      });
     }
 
     if (role !== 'patient') {
       return res.status(403).json({
-        error: 'Only patients can self-register. Accounts for doctors, donors, and NGOs must be created by an admin.'
+        error:
+          'Only patients can self-register. Accounts for doctors, donors, and NGOs must be created by an admin.'
       });
     }
 
     const password_hash = await bcrypt.hash(password, 10);
+
     const [result] = await pool.query(
       'INSERT INTO users (name, email, password_hash, role, specialty_id) VALUES (?, ?, ?, ?, ?)',
       [name, email, password_hash, 'patient', null]
@@ -54,6 +62,7 @@ export async function register(req, res) {
 export async function login(req, res) {
   try {
     const { email, password } = req.body || {};
+
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
@@ -63,11 +72,16 @@ export async function login(req, res) {
       [email]
     );
 
-    if (!rows.length) return res.status(401).json({ error: 'Invalid email or password' });
+    if (!rows.length) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
 
     const user = rows[0];
     const ok = await bcrypt.compare(password, user.password_hash);
-    if (!ok) return res.status(401).json({ error: 'Invalid email or password' });
+
+    if (!ok) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
 
     const token = jwt.sign(
       { id: user.id, role: user.role, name: user.name },
@@ -100,7 +114,10 @@ export async function me(req, res) {
       'SELECT id, role, name, email, specialty_id, created_at FROM users WHERE id = ? LIMIT 1',
       [req.user.id]
     );
-    if (!rows.length) return res.status(404).json({ error: 'User not found' });
+
+    if (!rows.length) {
+      return res.status(404).json({ error: 'User not found' });
+    }
 
     const profile = rows[0];
     profile.created_at = new Date(profile.created_at).toLocaleString('en-US');
@@ -111,6 +128,8 @@ export async function me(req, res) {
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error while retrieving profile data.' });
+    res.status(500).json({
+      error: 'Server error while retrieving profile data.'
+    });
   }
 }

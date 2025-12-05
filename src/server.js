@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { pool } from './db.js';
 import adminRoutes from './routes/adminRoutes.js';
-import authRoutes from './routes/authRoutes.js';
+import authRoutes from './routes/auth.js';
 import ngoRoutes from './routes/ngoRoutes.js'; 
 import missionRoutes from './routes/missionRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
