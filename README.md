@@ -168,13 +168,13 @@ You can access the full API documentation for HealthPal through our Postman publ
 ## 📩 Contact
 
 
-- 👩‍💻 **Tasneem Ratrout** – 
+-  **Tasneem Ratrout** – 
  tasneemratrout999@gmail.com  
 
-- 👩‍💻 **Shahd  Rawajbeh** – 
+-  **Shahd  Rawajbeh** – 
   s12114152@stu.najah.edu
 
-- 👨‍💻 **Nareeman Hatem Jomaa** –
+-  **Nareeman Hatem Jomaa** –
 S12112343@stu.najah.edu
-- 👩‍💻 **nuha hamad** – 
+-  **nuha hamad** – 
 nuha123hamad@gmail.com
