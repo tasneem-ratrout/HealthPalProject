@@ -113,7 +113,9 @@ export async function login(req, res) {
   }
 }
 
-
+// ===============================
+// Personal Account Info
+// ===============================
 export async function me(req, res) {
   try {
     const [rows] = await pool.query(
