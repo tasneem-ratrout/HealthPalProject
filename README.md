@@ -24,7 +24,7 @@ This project empowers communities with reliable access to healthcare resources, 
 
 ### 🔧 Running the project
 
----
+
 
 ### **1. Clone the Repository:**
 
@@ -74,7 +74,7 @@ Provides financial or medical donations, views campaigns, and monitors donation 
  🛠️ **Admin**
 Has full system control, manages users, cases, appointments, donations, alerts, and overall platform operations.
 
----
+
 ## ⭐ Main Features
 
 • 📅 **Appointment Management**  
@@ -152,7 +152,7 @@ A translation service to support multilingual communication (utils/translate.js)
 • 📡 **WebSocket Real-Time Updates**  
 Instant communication and live updates using socketService.js.
 
----
+
 ## 📝 API Documentation
 
 You can access the full API documentation for HealthPal through our Postman public collection:
@@ -161,9 +161,9 @@ You can access the full API documentation for HealthPal through our Postman publ
 [Click here to view the HealthPal API Documentation](https://documenter.getpostman.com/view/49378300/2sB3dPSqYe)
 
 
----
+
 ## 🎥 Demo
----
+
 
 ## 📩 Contact
 
