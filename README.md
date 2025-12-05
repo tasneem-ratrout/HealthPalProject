@@ -10,19 +10,7 @@ This project empowers communities with reliable access to healthcare resources, 
 
 
 
-
-## 📘 Table of Contents
-1. [Introduction](#introduction)
-2. [Built With](#built-with)
-3. [Getting Started](#getting-started)
-4. [Main Features](#main-features)
-5. [Roles](#roles)
-6. [API Documentation](#api-documentation)
-7. [Demo](#demo)
-7. [Contact](#contact)
-
-
-## Built With
+## 🔧Built With
 
 - **Node.js (Express.js):** A fast and flexible JavaScript runtime used to build scalable RESTful APIs.
 - **MySQL (phpMyAdmin):** Relational database system used to store users, medical records, appointments, donations, alerts, and more.
@@ -166,10 +154,10 @@ A translation service to support multilingual communication (utils/translate.js)
 Instant communication and live updates using socketService.js.
 
 ---
-
 ## 📝 API Documentation
 
-You can access the full API documentation for HealthPal through our Postman collection:
+You can access the full API documentation for HealthPal through our Postman public collection:
 
-👉 **Postman Collection:**  
-[Click here to view the HealthPal API Documentation](https://tasneemratrout999-6503777.postman.co/workspace/tasneem-ratrout's-Workspace~f6fafe77-5d2e-4032-8f09-96c5ce8749c1/collection/49378300-2d63d9d3-ff14-4a80-996e-0e3018758697?action=share&creator=49378300&active-environment=49378300-3053088f-2d2f-438c-bb2a-353a9040fff7)
+👉 **Postman Documentation:**  
+[Click here to view the HealthPal API Documentation](https://documenter.getpostman.com/view/49378300/2sB3dPSqYe)
+
