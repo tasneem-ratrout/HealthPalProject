@@ -1,41 +1,16 @@
 import bcrypt from 'bcrypt';
 import { pool } from '../db.js';
 import jwt from 'jsonwebtoken';
-import validator from 'validator';
 
 // ===============================
 // Register (only patients can self-register)
 // ===============================
 export async function register(req, res) {
   try {
-    const { name, email, password } = req.body;
-    const role = 'patient';
-    const specialty_id = null;
+    const { name, email, password, role = 'patient', specialty_id } = req.body;
 
     if (!name || !email || !password) {
-      return res.status(400).json({ error: 'Name, email, and password are required.' });
-    }
-
-    if (name.length < 3) {
-      return res.status(400).json({ error: 'Name must be at least 3 characters long.' });
-    }
-
-    if (!validator.isEmail(email)) {
-      return res.status(400).json({ error: 'Invalid email format.' });
-    }
-
-    const strongPassword = validator.isStrongPassword(password, {
-      minLength: 8,
-      minLowercase: 1,
-      minUppercase: 1,
-      minNumbers: 1,
-      minSymbols: 1
-    });
-
-    if (!strongPassword) {
-      return res.status(400).json({
-        error: 'Password must be at least 8 characters long and include uppercase, lowercase, number, and special symbol.'
-      });
+      return res.status(400).json({ error: 'Name, email, and password are required' });
     }
 
     const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
@@ -43,21 +18,25 @@ export async function register(req, res) {
       return res.status(409).json({ error: 'This email is already registered. Please log in instead.' });
     }
 
-    const password_hash = await bcrypt.hash(password, 10);
+    if (role !== 'patient') {
+      return res.status(403).json({
+        error: 'Only patients can self-register. Accounts for doctors, donors, and NGOs must be created by an admin.'
+      });
+    }
 
+    const password_hash = await bcrypt.hash(password, 10);
     const [result] = await pool.query(
       'INSERT INTO users (name, email, password_hash, role, specialty_id) VALUES (?, ?, ?, ?, ?)',
-      [name, email, password_hash, role, specialty_id]
+      [name, email, password_hash, 'patient', null]
     );
 
     res.status(201).json({
-      success: true,
-      message: `Welcome ${name}! Your patient account has been created successfully.`,
+      message: ` Welcome ${name}! Your patient account has been created successfully.`,
       user: {
         id: result.insertId,
         name,
         email,
-        role
+        role: 'patient'
       }
     });
   } catch (err) {
@@ -68,7 +47,6 @@ export async function register(req, res) {
     });
   }
 }
-
 
 // ===============================
 // Login
