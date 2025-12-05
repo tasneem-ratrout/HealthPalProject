@@ -16,7 +16,6 @@ This project empowers communities with reliable access to healthcare resources, 
 - **MySQL (phpMyAdmin):** Relational database system used to store users, medical records, appointments, donations, alerts, and more.
 - **JWT Authentication:** Provides secure login and authorization for different user roles (admin, doctor, patient, NGO, volunteer).
 - **BCrypt:** Used for hashing and protecting user passwords.
-- **Nodemailer:** Enables sending email notifications for account updates or system alerts.
 - **Postman:** Used for API testing, validation, and documentation.
 - **Git & GitHub:** Version control and collaboration platform used for team development and project management.
 
@@ -161,3 +160,21 @@ You can access the full API documentation for HealthPal through our Postman publ
 👉 **Postman Documentation:**  
 [Click here to view the HealthPal API Documentation](https://documenter.getpostman.com/view/49378300/2sB3dPSqYe)
 
+
+---
+## 🎥 Demo
+---
+
+## 📩 Contact
+
+
+- 👩‍💻 **Tasneem Ratrout** – 
+ tasneemratrout999@gmail.com  
+
+- 👩‍💻 **Shahd  Rawajbeh** – 
+  s12114152@stu.najah.edu
+
+- 👨‍💻 **Nareeman Hatem Jomaa** –
+S12112343@stu.najah.edu
+- 👩‍💻 **nuha hamad** – 
+nuha123hamad@gmail.com
