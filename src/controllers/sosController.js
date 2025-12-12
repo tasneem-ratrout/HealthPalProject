@@ -1,20 +1,19 @@
 import { pool } from "../db.js";
 
-// Simple distance calculator
+/* ----------------------------------
+   Helper: Distance Calculator
+----------------------------------- */
 function getDistance(lat1, lon1, lat2, lon2) {
   const dx = lat1 - lat2;
   const dy = lon1 - lon2;
   return Math.sqrt(dx * dx + dy * dy);
 }
 
+/* ----------------------------------
+   1️⃣ Trigger SOS
+----------------------------------- */
 export const triggerSOSController = async (req, res) => {
   try {
-    console.log("Using DB:", process.env.DB_NAME);
-
-
-    const [db] = await pool.query("SELECT DATABASE() AS db");
-    console.log("🚨 CONNECTED TO DATABASE:", db[0].db);
-
     const { userId, coordinates, medicalHistory, severity = "high" } = req.body;
 
     if (!userId || !coordinates?.lat || !coordinates?.lng) {
@@ -23,8 +22,10 @@ export const triggerSOSController = async (req, res) => {
 
     const { lat, lng } = coordinates;
 
-    // 1️⃣ Get all NGOs
-    const [ngos] = await pool.query("SELECT id, name, latitude, longitude FROM ngos");
+    /* ---- Find nearest NGO ---- */
+    const [ngos] = await pool.query(
+      "SELECT name, latitude, longitude FROM ngos WHERE latitude IS NOT NULL"
+    );
 
     let nearestNGO = null;
     let minDist = Infinity;
@@ -37,76 +38,144 @@ export const triggerSOSController = async (req, res) => {
       }
     });
 
-    // 2️⃣ Select any doctor (first doctor)
-    const [doctors] = await pool.query(
-      "SELECT id, name FROM users WHERE LOWER(role) = 'doctor'"
+    /* ---- Create SOS ---- */
+    const [result] = await pool.query(
+      `
+      INSERT INTO sos_alerts
+      (user_id, latitude, longitude, medical_history, severity, nearest_ngo, status)
+      VALUES (?, ?, ?, ?, ?, ?, 'open')
+      `,
+      [
+        userId,
+        lat,
+        lng,
+        medicalHistory || null,
+        severity,
+        nearestNGO?.name || "Unknown NGO"
+      ]
     );
 
-    const assignedDoctor = doctors.length > 0 ? doctors[0] : null;
+    const sosId = result.insertId;
 
-    // 3️⃣ Insert SOS alert
-    const [result] = await pool.query(
-  `INSERT INTO sos_alerts 
-  (user_id, assigned_doctor_id, latitude, longitude, medical_history, severity, nearest_ngo, status)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-  [
-    userId,
-    assignedDoctor?.id || null,
-    lat,
-    lng,
-    medicalHistory || null,
-    severity,
-    nearestNGO?.name || "Unknown NGO",
-    "open"
-  ]
-);
+    /* ---- Notify all doctors ---- */
+    const [doctors] = await pool.query(
+      "SELECT id FROM users WHERE LOWER(role) = 'doctor'"
+    );
 
-    
+    for (const doctor of doctors) {
+      const payload = JSON.stringify({
+        sosId,
+        userId,
+        message: `SOS alert from user ${userId}`,
+        severity,
+        coordinates: { lat, lng }
+      });
 
-
-
-    // 4️⃣ Create internal notification for doctor
-    // 4️⃣ Create internal notification for doctor
-    if (assignedDoctor) {
-  const payloadMessage = JSON.stringify({
-    message: `SOS alert from user ${userId}`,
-    severity: severity,
-    coordinates: { lat, lng }
-  });
-
-  await pool.query(
-    `INSERT INTO notifications (user_id, type, payload, status) 
-     VALUES (?, 'sos', ?, 'pending')`,
-    [
-      assignedDoctor.id,
-      payloadMessage
-    ]
-  );
-}
-
-
+      await pool.query(
+        `
+        INSERT INTO notifications (user_id, type, payload, status, sos_id)
+        VALUES (?, 'sos', ?, 'pending', ?)
+        `,
+        [doctor.id, payload, sosId]
+      );
+    }
 
     return res.status(201).json({
       message: "🚨 SOS Triggered Successfully",
-      sosId: result.insertId,
+      sosId,
       data: {
         userId,
-        coordinates,
         severity,
-        nearestNGO: nearestNGO?.name,
-        assignedDoctor: assignedDoctor?.name || null
+        nearestNGO: nearestNGO?.name || null
       }
     });
 
   } catch (error) {
     console.error("SOS ERROR:", error);
-    res.status(500).json({
-      message: "Failed to trigger SOS",
-      error: error.message
-    });
+    res.status(500).json({ message: "Failed to trigger SOS" });
   }
 };
 
+
+/* ----------------------------------
+   2️⃣ Doctor accepts SOS
+----------------------------------- */
+export const acceptSOSController = async (req, res) => {
+  const connection = await pool.getConnection();
+
+  try {
+    const { sosId } = req.params;
+    const doctorId = req.user.id;
+
+    await connection.beginTransaction();
+
+    // Check SOS still open
+    const [rows] = await connection.query(
+      "SELECT * FROM sos_alerts WHERE id = ? AND status = 'open' FOR UPDATE",
+      [sosId]
+    );
+
+    if (rows.length === 0) {
+      await connection.rollback();
+      return res.status(400).json({ message: "SOS already accepted or not found" });
+    }
+
+    // Assign doctor
+    await connection.query(
+      `
+      UPDATE sos_alerts
+      SET status = 'in_progress',
+          assigned_doctor_id = ?
+      WHERE id = ?
+      `,
+      [doctorId, sosId]
+    );
+
+    // Accepting doctor
+    await connection.query(
+      `
+      UPDATE notifications
+      SET status = 'sent'
+      WHERE user_id = ?
+        AND type = 'sos'
+        AND sos_id = ?
+      `,
+      [doctorId, sosId]
+    );
+
+    // Cancel others
+    await connection.query(
+      `
+      UPDATE notifications
+      SET status = 'cancelled'
+      WHERE type = 'sos'
+        AND sos_id = ?
+        AND user_id != ?
+      `,
+      [sosId, doctorId]
+    );
+
+    await connection.commit();
+
+    res.json({
+      message: "✅ SOS case accepted",
+      sosId,
+      doctorId
+    });
+
+  } catch (error) {
+    await connection.rollback();
+    console.error("ACCEPT SOS ERROR:", error);
+    res.status(500).json({ message: "Failed to accept SOS" });
+  } finally {
+    connection.release();
+  }
+};
+
+
+/* ----------------------------------
+   3️⃣ Get all SOS
+----------------------------------- */
 export const getAllSOSHistory = async (req, res) => {
   try {
     const [rows] = await pool.query(`
@@ -123,11 +192,15 @@ export const getAllSOSHistory = async (req, res) => {
   }
 };
 
+/* ----------------------------------
+   4️⃣ Get user SOS history
+----------------------------------- */
 export const getUserSOSHistory = async (req, res) => {
   try {
     const userId = req.params.userId;
+
     const [rows] = await pool.query(
-      `SELECT * FROM sos_alerts WHERE user_id = ? ORDER BY created_at DESC`,
+      "SELECT * FROM sos_alerts WHERE user_id = ? ORDER BY created_at DESC",
       [userId]
     );
 
@@ -136,4 +209,3 @@ export const getUserSOSHistory = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch user's SOS history" });
   }
 };
-
