@@ -1,3 +1,5 @@
+console.log("💡 SOS route loaded");
+
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -15,6 +17,9 @@ import transparencyRoutes from './routes/transparencyRoutes.js';
 import medicalAidRoutes from './routes/medicalAidRoutes.js';
 import inventoryRoutes from './routes/inventoryRoutes.js';
 import feedbackRoutes from './routes/feedbackRoutes.js';
+import appointmentsRouter from "./routes/appointmentsRouter.js";
+import sosRoutes from './routes/sosRoutes.js';
+import dailyHealthRoutes from "./routes/dailyHealthRoutes.js";
 
 dotenv.config();
 
@@ -35,6 +40,12 @@ app.use('/api/v1/admin', reportRoutes);
 app.use('/api/v1/admin', medicalAidRoutes);
 app.use('/api/v1/admin', inventoryRoutes);
 app.use('/api/v1', feedbackRoutes);
+app.use('/api/v1/appointments', appointmentsRouter);
+app.use('/api/v1/sos', sosRoutes);
+app.use('/api/v1/wellness', dailyHealthRoutes);
+
+
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () =>
