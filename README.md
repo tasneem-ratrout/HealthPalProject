@@ -163,6 +163,7 @@ You can access the full API documentation for HealthPal through our Postman publ
 
 
 ## 🎥 Demo
+[Click here to view the demo](https://drive.google.com/drive/folders/1_xUnpkVqOWkdRebhPdOGfcqcLBzjyTM4)
 
 
 ## 📩 Contact
