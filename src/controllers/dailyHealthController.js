@@ -1,6 +1,6 @@
 import { pool } from "../db.js";
 
-// 🔥 Dangerous symptoms (to trigger doctor alert)
+//  Dangerous symptoms (to trigger doctor alert)
 const dangerSymptoms = [
   "chest pain",
   "vomiting",
@@ -9,7 +9,7 @@ const dangerSymptoms = [
   "difficulty breathing"
 ];
 
-// ⭐ Recommendation engine
+// Recommendation 
 function generateRecommendations(log) {
   const recs = [];
 
@@ -23,7 +23,7 @@ function generateRecommendations(log) {
   return recs.length ? recs : ["No concerns detected. Keep up the good habits!"];
 }
 
-// 🚨 Feature 2 — Auto Doctor Alert
+// — Auto Doctor Alert
 async function alertDoctorIfNeeded(userId, log) {
   const danger =
     log.painLevel >= 8 ||
@@ -32,16 +32,28 @@ async function alertDoctorIfNeeded(userId, log) {
 
   if (!danger) return null;
 
-  // Select a doctor to notify
+  
+  const specialityId = getSpecialityId(log);
+
+  if (!specialityId) return null;
+
+  
   const [doctors] = await pool.query(
-    "SELECT id FROM users WHERE LOWER(role) = 'doctor' LIMIT 1"
+    `
+    SELECT id 
+    FROM users 
+    WHERE LOWER(role) = 'doctor'
+      AND speciality_id = ?
+    LIMIT 1
+    `,
+    [specialityId]
   );
 
   if (doctors.length === 0) return null;
 
   const doctorId = doctors[0].id;
 
-  // Add notification to DB
+  
   await pool.query(
     `INSERT INTO notifications (user_id, type, payload, status)
      VALUES (?, 'health_alert', ?, 'pending')`,
@@ -51,7 +63,8 @@ async function alertDoctorIfNeeded(userId, log) {
         message: "A patient logged dangerous health data.",
         patientId: userId,
         painLevel: log.painLevel,
-        symptoms: log.symptoms
+        symptoms: log.symptoms,
+        specialityId
       })
     ]
   );
@@ -59,7 +72,8 @@ async function alertDoctorIfNeeded(userId, log) {
   return doctorId;
 }
 
-// ⭐ POST: Add daily log (UPGRADED)
+
+//  Add daily log (UPGRADED)
 export const addDailyHealthLog = async (req, res) => {
   try {
     const { userId, symptoms, mood, medications, painLevel, energyLevel, sleepHours, notes } = req.body;
@@ -73,10 +87,10 @@ export const addDailyHealthLog = async (req, res) => {
 
     const log = { symptoms, mood, medications, painLevel, energyLevel, sleepHours };
 
-    // Feature 2 → Auto doctor alert
+    // Auto doctor alert
     const alertedDoctorId = await alertDoctorIfNeeded(userId, log);
 
-    // Feature 3 → Recommendations
+    //  Recommendations
     const recommendations = generateRecommendations(log);
 
     res.status(201).json({
@@ -90,7 +104,7 @@ export const addDailyHealthLog = async (req, res) => {
   }
 };
 
-// ⭐ Feature 4 — Weekly Summary
+//  — Weekly Summary
 export const getWeeklySummary = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -115,14 +129,14 @@ export const getWeeklySummary = async (req, res) => {
       });
     }
 
-    // ---------- Helper: Safely parse numbers ----------
+    
     const parseNum = (v) => {
       if (v === null || v === undefined) return null;
       const num = Number(v);
       return isNaN(num) ? null : num;
     };
 
-    // ---------- Clean numeric arrays ----------
+    
     const painValues = logs.map(l => parseNum(l.pain_level));
     const sleepValues = logs.map(l => parseNum(l.sleep_hours));
     const energyValues = logs.map(l => parseNum(l.energy_level));
@@ -133,7 +147,7 @@ export const getWeeklySummary = async (req, res) => {
       return (filtered.reduce((a, b) => a + b, 0) / filtered.length).toFixed(1);
     };
 
-    // ---------- Symptoms cleaning ----------
+    
     const symptomsCount = {};
     logs.forEach(log => {
       if (log.symptoms) {
